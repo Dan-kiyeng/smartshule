@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TabType, Student, Teacher, SystemActivity, AssessmentRecord, FeeTransaction } from './types';
+import { apiService } from './services/api';
 import {
   initialStudents,
   initialTeachers,
@@ -61,6 +62,26 @@ export default function App() {
   const [knecSyncModalOpen, setKnecSyncModalOpen] = useState(false);
   const [exportReportModalOpen, setExportReportModalOpen] = useState(false);
   const [selectedStudentForReport, setSelectedStudentForReport] = useState<Student | undefined>(undefined);
+  const [backendConnected, setBackendConnected] = useState(false);
+
+  // Sync with Backend API on Mount
+  useEffect(() => {
+    async function syncBackend() {
+      const isUp = await apiService.checkHealth();
+      setBackendConnected(isUp);
+      if (isUp) {
+        try {
+          const studentData = await apiService.getStudents();
+          if (studentData?.students?.length) {
+            setStudents(studentData.students);
+          }
+        } catch {
+          // Fallback to local state
+        }
+      }
+    }
+    syncBackend();
+  }, []);
 
   // Quick Action / Deep Link Triggers
   const handleOpenMpesa = (student?: Student) => {
@@ -113,6 +134,9 @@ export default function App() {
       );
     }
 
+    // Trigger Backend M-Pesa STK Push Endpoint
+    apiService.initiateMpesaStkPush(phone, amount, studentId).catch(() => {});
+
     // Add activity
     const newAct: SystemActivity = {
       id: `act-${Date.now()}`,
@@ -136,6 +160,9 @@ export default function App() {
     };
 
     setAssessments([newRecord, ...assessments]);
+
+    // Save to Backend API
+    apiService.recordFormativeAssessment(assessment).catch(() => {});
 
     // Update student's CBC rating in state
     setStudents((prev) =>
@@ -166,6 +193,9 @@ export default function App() {
       id: `std-${Date.now()}`,
     };
     setStudents([created, ...students]);
+
+    // Save to Backend API
+    apiService.registerStudent(created).catch(() => {});
 
     const newAct: SystemActivity = {
       id: `act-${Date.now()}`,

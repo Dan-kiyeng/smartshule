@@ -82,7 +82,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
               <div className="flex flex-col leading-tight">
                 <span className="font-headline-md text-body-md text-primary font-semibold tracking-tight">
-                  EduManage CBC
+                  smartshule CBC
                 </span>
                 <span className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
                   Kenya Portal
